@@ -1,0 +1,35 @@
+name: test
+on: push
+
+jobs:
+  test:
+    name: ghc ${{ matrix.scenario.ghc }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        scenario:
+          - ghc: 8.10.5
+          - ghc: 9.0.1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-${{ matrix.scenario.ghc }}-${{ hashFiles('stack.yaml.lock') }}
+      - name: Setup Haskell
+        uses: haskell/actions/setup@v1
+        id: cabal-setup-haskell
+        with:
+          ghc-version: ${{ matrix.scenario.ghc }}
+          enable-stack: true
+      - name: Prepare
+        run: |-
+          set -ex
+          rm -f stack.yaml.lock
+          stack clean
+      - name: Install dependencies
+        run: stack test  --bench --no-terminal --system-ghc --only-dependencies
+      - name: Build
+        run: stack build --bench --no-terminal --system-ghc --haddock --no-haddock-deps
+      - name: Test
+        run: stack test  --bench --no-terminal --system-ghc --haddock --no-haddock-deps --no-run-benchmarks
