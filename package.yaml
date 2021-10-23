@@ -24,14 +24,20 @@ description:         Please see the README on GitHub at <https://github.com/rins
 
 dependencies:
 - base >= 4.10 && < 5
+- cryptonite
+- Diff
 - mtl
+- optparse-applicative
+- pretty
+- text
+- turtle
 - rio
 
 library:
   source-dirs: src
 
 executables:
-  xcache-hs-exe:
+  xcache:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

@@ -1,7 +1,10 @@
 module Main where
 
 import           Control.Monad.Cont
+import           Options.Applicative       (execParser)
 import           RIO
+import           XCache.Cli.XCacheArgument (xcacheArgumentParserInfo)
+import           XCache.Lib                (run)
 
 data Env = Env
     { envLogFunc :: LogFunc
@@ -16,4 +19,4 @@ main =
         logFunc <- logOptionsHandle stderr False >>= ContT . withLogFunc
         let env = Env logFunc
         runRIO env $
-            logInfo "Hello, xcache-hs!"
+            liftIO (execParser xcacheArgumentParserInfo) >>= run
