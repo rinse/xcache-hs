@@ -1,6 +1,5 @@
 module XCache.XCacheStore (run, xcacheStore) where
 
-import qualified Data.Text                      as T
 import qualified Data.Text.IO                   as T
 import           RIO
 import           Turtle                         (mktree, parent, procStrict,
@@ -20,7 +19,7 @@ xcacheStore inputCommand@(cmd :| args) discardOnFail = do
     then
         pure ""
     else do
-        filePath <- defaultXCachePath . T.unwords $ toList inputCommand
+        filePath <- defaultXCachePath $ xcacheFileName inputCommand
         mktree $ parent filePath
         liftIO $ do
             writeTextFile filePath output
