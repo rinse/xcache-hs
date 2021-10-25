@@ -8,16 +8,16 @@ import           RIO
 import           Text.PrettyPrint              (render, zeroWidthText)
 import           Turtle                        (mktree, parent, touch)
 import           XCache.Cli.XCacheDiffArgument (XCacheDiffArgument (..))
-import           XCache.Utils                  (defaultXCachePath,
-                                                xcacheFileName)
+import           XCache.Env                    (HasXCacheFolder (..))
+import           XCache.Utils                  (xcachePath)
 import           XCache.XCacheGet              (xcacheGet)
 import           XCache.XCacheStore            (xcacheStore)
 
-run :: XCacheDiffArgument -> RIO env ()
+run :: HasXCacheFolder env => XCacheDiffArgument -> RIO env ()
 run XCacheDiffArgument {discardOnFail, inputCommand} =
     xcacheDiff inputCommand discardOnFail >>= liftIO . T.putStr
 
-xcacheDiff :: MonadIO m => NonEmpty Text -> Bool -> m Text
+xcacheDiff :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> Bool -> m Text
 xcacheDiff inputCommand discardOnFail = do
     touchCache inputCommand
     previousResult <- T.lines <$> xcacheGet inputCommand
@@ -25,8 +25,8 @@ xcacheDiff inputCommand discardOnFail = do
     let diffs = getContextDiff 0 previousResult newResult
     pure . T.pack . render $ prettyContextDiff "previousResult" "newResult" (zeroWidthText . T.unpack) diffs
 
-touchCache :: MonadIO m => NonEmpty Text -> m ()
+touchCache :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> m ()
 touchCache inputCommand = do
-    filePath <- defaultXCachePath $ xcacheFileName inputCommand
+    filePath <- xcachePath inputCommand
     mktree $ parent filePath
     touch filePath
