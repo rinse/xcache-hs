@@ -1,8 +1,9 @@
 module XCache.XCacheStore (run, xcacheStore) where
 
+import qualified Data.Text                      as T
 import qualified Data.Text.IO                   as T
 import           RIO
-import           Turtle                         (mktree, parent, procStrict,
+import           Turtle                         (mktree, parent, shellStrict,
                                                  writeTextFile)
 import           XCache.Cli.XCacheStoreArgument (XCacheStoreArgument (..))
 import           XCache.Env                     (HasXCacheFolder (..))
@@ -13,13 +14,10 @@ run XCacheStoreArgument {discardOnFail, inputCommand} =
     xcacheStore inputCommand discardOnFail >>= liftIO . T.putStr
 
 xcacheStore :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> Bool -> m Text
-xcacheStore inputCommand@(cmd :| args) discardOnFail = do
-    (exitCode, output) <- procStrict cmd args mempty
+xcacheStore inputCommand discardOnFail = do
+    (exitCode, output) <- shellStrict (T.unwords . toList $ inputCommand) mempty
     let isFailed = exitCode /= ExitSuccess
-    if isFailed && discardOnFail
-    then
-        pure ""
-    else do
+    if isFailed && discardOnFail then pure "" else do
         filePath <- xcachePath inputCommand
         mktree $ parent filePath
         liftIO $ do
