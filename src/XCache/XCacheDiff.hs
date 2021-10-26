@@ -14,16 +14,16 @@ import           XCache.XCacheGet              (xcacheGet)
 import           XCache.XCacheStore            (xcacheStore)
 
 run :: HasXCacheFolder env => XCacheDiffArgument -> RIO env ()
-run XCacheDiffArgument {discardOnFail, inputCommand} =
-    xcacheDiff inputCommand discardOnFail >>= liftIO . T.putStr
+run XCacheDiffArgument {discardOnFail, unified, inputCommand} =
+    xcacheDiff inputCommand unified discardOnFail >>= liftIO . T.putStr
 
-xcacheDiff :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> Bool -> m Text
-xcacheDiff inputCommand discardOnFail = do
+xcacheDiff :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> Int -> Bool -> m Text
+xcacheDiff inputCommand numContext discardOnFail = do
     touchCache inputCommand
     previousResult <- T.lines <$> xcacheGet inputCommand
     newResult <- T.lines <$> xcacheStore inputCommand discardOnFail
-    let diffs = getContextDiff 0 previousResult newResult
-    pure . T.pack . render $ prettyContextDiff "previousResult" "newResult" (zeroWidthText . T.unpack) diffs
+    let diffs = getContextDiff numContext previousResult newResult
+    pure . T.pack . render $ prettyContextDiff "prev" "new" (zeroWidthText . T.unpack) diffs
 
 touchCache :: (MonadIO m, MonadReader env m, HasXCacheFolder env) => NonEmpty Text -> m ()
 touchCache inputCommand = do
