@@ -10,11 +10,18 @@ import           XCache.Cli.Utils
 
 data XCacheDiffArgument = XCacheDiffArgument
     { discardOnFail :: Bool
+    , unified       :: Int
     , inputCommand  :: NonEmpty Text
     } deriving (Read, Show)
 
 xcacheDiffArgumentParser :: Parser XCacheDiffArgument
-xcacheDiffArgumentParser = XCacheDiffArgument <$> discardOnFailParser <*> inputCommandParser
+xcacheDiffArgumentParser = XCacheDiffArgument <$> discardOnFailParser <*> contextParser <*> inputCommandParser
+    where
+    contextParser = option auto . execWriter $ do
+        tell $ long "unified" <> short 'U'
+        tell $ metavar "N"
+        tell $ value 0 <> showDefault
+        tell $ help "Output N lines of context."
 
 xcacheDiffArgumentParserInfo :: ParserInfo XCacheDiffArgument
 xcacheDiffArgumentParserInfo =
